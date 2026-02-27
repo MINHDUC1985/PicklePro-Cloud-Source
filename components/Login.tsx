@@ -11,22 +11,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Static Login for Serverless Setup
-    const staticUsers: User[] = [
-      { id: '1', username: 'admin', password: '123', role: 'admin' },
-      { id: '2', username: 'viewer', password: '123', role: 'viewer' }
-    ];
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    const foundUser = staticUsers.find(u => u.username === username && u.password === password);
-    if (foundUser) {
-      const { password, ...userWithoutPassword } = foundUser;
-      onLogin(userWithoutPassword);
-    } else {
-      setError('Tài khoản hoặc mật khẩu không chính xác');
+      if (res.ok) {
+        const user = await res.json();
+        onLogin(user);
+      } else {
+        const errData = await res.json();
+        setError(errData.error || 'Tài khoản hoặc mật khẩu không chính xác');
+      }
+    } catch (err) {
+      setError('Lỗi kết nối đến máy chủ. Hãy thử lại (Refresh).');
     }
   };
 
